@@ -23,10 +23,7 @@ export class P2PStore {
         this.rootStore.playbackStore.setVideoUrl(videoUrl);
 
         this.peerInstance = new Peer(peerConfig);
-
-        this.peerInstance.on("error", (err) => {
-            console.error(err);
-        });
+        this.setupPeerListeners();
 
         this.peerInstance.on('open', (generatedId: string) => {
             runInAction(() => {
@@ -42,9 +39,9 @@ export class P2PStore {
         this.peerInstance.on('connection', (conn) => {
             runInAction(() => {
                 this.connection = conn;
-                this.setupConnectionListeners();
-                console.log('connection and conn', conn)
             });
+            this.setupConnectionListeners();
+            console.log('connection and conn', conn)
         });
     }
 
@@ -53,19 +50,46 @@ export class P2PStore {
         this.roomId = roomId;
 
         this.peerInstance = new Peer(peerConfig);
-
-        this.peerInstance.on("error", (err) => {
-            console.error(err);
-        });
+        this.setupPeerListeners();
 
         this.peerInstance.on('open', () => {
             const conn = this.peerInstance!.connect(roomId);
 
             runInAction(() => {
                 this.connection = conn;
-                this.setupConnectionListeners();
             })
+            this.setupConnectionListeners();
         })
+    }
+
+    private setupPeerListeners() {
+        if (!this.peerInstance) return;
+
+        this.peerInstance.on("error", (err) => {
+            console.error(err);
+            runInAction(() => {
+                this.isConnecting = false;
+            });
+        });
+
+        this.peerInstance.on("disconnected", () => {
+            console.log("Disconnected from Peer server");
+
+            runInAction(() => {
+                this.isPeerConnected = false;
+            });
+        });
+
+        this.peerInstance.on("close", () => {
+            console.log("Peer closed");
+
+            runInAction(() => {
+                this.roomId = null;
+                this.isPeerConnected = false;
+                this.connection = null;
+                this.peerInstance = null;
+            });
+        });
     }
 
     private setupConnectionListeners() {
@@ -105,10 +129,14 @@ export class P2PStore {
         });
         this.connection.on("error", (err) => {
             console.error(err);
+            runInAction(() => {
+                this.isPeerConnected = false;
+            });
         });
 
         this.connection.on('close', () => {
             runInAction(() => {
+                this.connection = null;
                 this.isPeerConnected = false;
                 this.rootStore.userStore.setFriendUsername('');
             });
