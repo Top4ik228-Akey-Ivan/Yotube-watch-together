@@ -15,6 +15,20 @@ export class PlaybackStore {
         makeAutoObservable(this);
     };
 
+    get videoId() {
+        try {
+            const url = new URL(this.videoUrl);
+
+            if (url.hostname === "youtu.be") {
+                return url.pathname.slice(1);
+            }
+
+            return url.searchParams.get("v") ?? "";
+        } catch {
+            return "";
+        }
+    }
+
     setVideoUrl(url: string) {
         this.videoUrl = url;
     };
