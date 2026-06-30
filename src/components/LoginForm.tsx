@@ -47,12 +47,14 @@ const LoginForm: React.FC = () => {
         console.log('Данные формы валидны:', data);
 
         const isHost = data.mode === 'host';
-
         if (isHost) {
             // Здесь будет запуск MobX:
             rootStore.userStore.loginUser(data.username, isHost);
+            rootStore.p2pStore.initRoomAsHost(data.videoUrl || '');
         } else {
             // Здесь будет запуск MobX:
+            rootStore.userStore.loginUser(data.username, false);
+            rootStore.p2pStore.connectToRoomAsGuest(data.roomId || '');
         }
     };
 
