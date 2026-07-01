@@ -166,17 +166,24 @@ export class P2PStore {
                 break;
 
             case 'PLAY':
-                this.rootStore.playbackStore.setIsPlaying(true, true);
+                console.log("NETWORK PLAY");
+                this.rootStore.playbackStore.setIsPlaying(true, true, packet.time);
                 break;
 
             case 'PAUSE':
-                this.rootStore.playbackStore.setIsPlaying(false, true);
+                console.log("NETWORK PAUSE");
+                this.rootStore.playbackStore.setIsPlaying(false, true, packet.time);
+                break;
+
+            case "SEEK":
+                console.log("NETWORK SEEK");
+                this.rootStore.playbackStore.seekTo(packet.time, true);
                 break;
         }
     };
 
     // Отправка сетевых команд (Отправляем сигналы другу)
-    sendNetworkEvent(type: 'PLAY' | 'PAUSE' | 'SYSTEM_WELCOME', payload?: any) {
+    sendNetworkEvent(type: 'PLAY' | 'PAUSE' | 'SEEK' | 'SYSTEM_WELCOME', payload?: any) {
         if (this.connection && this.isPeerConnected) {
             this.connection.send({
                 type,

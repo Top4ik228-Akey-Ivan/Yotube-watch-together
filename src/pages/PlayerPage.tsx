@@ -2,21 +2,31 @@ import { observer } from "mobx-react-lite";
 import { rootStore } from "../stores/rootStore";
 import type { YouTubeProps } from "react-youtube";
 import YouTube from "react-youtube";
+import { useEffect } from "react";
 
 const PlayerPage: React.FC = observer(() => {
     const { playbackStore, userStore, p2pStore } = rootStore;
 
     const onReady: YouTubeProps["onReady"] = (event) => {
+        console.log("READY");
         playbackStore.setYoutubePlayerInstance(event.target);
     };
 
     const onPlay: YouTubeProps["onPlay"] = () => {
-        playbackStore.setIsPlaying(true);
+        console.log("ON PLAY");
+        playbackStore.setIsPlaying(true, false);
     };
 
     const onPause: YouTubeProps["onPause"] = () => {
-        playbackStore.setIsPlaying(false);
+        console.log("ON PAUSE");
+        playbackStore.setIsPlaying(false, false);
     };
+
+    useEffect(() => {
+        return () => {
+            playbackStore.stopTimeTracking();
+        };
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#0f0f14] text-white">
