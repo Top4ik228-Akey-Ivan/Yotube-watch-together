@@ -44,7 +44,6 @@ const LoginForm: React.FC = () => {
 
     // 3. Отправка формы (срабатывает, если всё заполнено верно)
     const onSubmit = (data: AuthFormValues) => {
-        console.log('Данные формы валидны:', data);
 
         const isHost = data.mode === 'host';
         if (isHost) {

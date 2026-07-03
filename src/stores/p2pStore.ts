@@ -32,7 +32,7 @@ export class P2PStore {
 
                 const newUrl = `${window.location.origin}${window.location.pathname}?room=${generatedId}`;
                 window.history.pushState({ path: newUrl }, '', newUrl);
-                console.log('open and ID', generatedId);
+                console.log('open peer', generatedId);
             });
         });
 
@@ -41,7 +41,6 @@ export class P2PStore {
                 this.connection = conn;
             });
             this.setupConnectionListeners();
-            console.log('connection and conn', conn)
         });
     }
 
@@ -53,13 +52,39 @@ export class P2PStore {
         this.setupPeerListeners();
 
         this.peerInstance.on('open', () => {
-            const conn = this.peerInstance!.connect(roomId);
-
-            runInAction(() => {
-                this.connection = conn;
-            })
-            this.setupConnectionListeners();
+            this.attemptConnect(roomId);
         })
+    }
+
+    private attemptConnect(roomId: string, retriesLeft: number = 3) {
+        const conn = this.peerInstance!.connect(roomId, { reliable: true });
+
+        // once, а не on — обработчик должен сработать максимум один раз за попытку,
+        // иначе при следующих ошибках/ретраях они будут накапливаться и дублироваться
+        const onError = (err: any) => {
+            console.error('[P2P] Peer error during connect:', err.type, err);
+            if (err.type === 'peer-unavailable' && retriesLeft > 0) {
+                console.log('[P2P] Peer not ready yet, retrying in 1.5s...');
+                setTimeout(() => this.attemptConnect(roomId, retriesLeft - 1), 1500);
+            } else {
+                runInAction(() => {
+                    this.isConnecting = false;
+                });
+            }
+        };
+
+        this.peerInstance!.once('error', onError);
+
+        // Если соединение всё же откроется успешно — снимаем обработчик ошибки,
+        // чтобы он не сработал позже на не связанной с этим подключением ошибке
+        conn.once('open', () => {
+            this.peerInstance!.off('error', onError);
+        });
+
+        runInAction(() => {
+            this.connection = conn;
+        });
+        this.setupConnectionListeners();
     }
 
     private setupPeerListeners() {
@@ -73,7 +98,6 @@ export class P2PStore {
         });
 
         this.peerInstance.on("disconnected", () => {
-            console.log("Disconnected from Peer server");
 
             runInAction(() => {
                 this.isPeerConnected = false;
@@ -81,8 +105,6 @@ export class P2PStore {
         });
 
         this.peerInstance.on("close", () => {
-            console.log("Peer closed");
-
             runInAction(() => {
                 this.roomId = null;
                 this.isPeerConnected = false;
