@@ -92,13 +92,18 @@ export class P2PStore {
 
         this.peerInstance.on("error", (err) => {
             console.error(err);
+            // Если гасить isConnecting здесь тоже — лоадер пропадёт раньше времени,
+            // до того как ретраи реально закончатся.
+            if (err.type === 'peer-unavailable') {
+                return;
+            }
+
             runInAction(() => {
                 this.isConnecting = false;
             });
         });
 
         this.peerInstance.on("disconnected", () => {
-
             runInAction(() => {
                 this.isPeerConnected = false;
             });
