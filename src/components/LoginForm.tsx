@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input, Button, Tabs, Card, Typography, Alert } from 'antd';
 import { YoutubeOutlined, UsergroupAddOutlined } from '@ant-design/icons';
 import { authSchema, type AuthFormValues } from '../schemas/authSchema';
+import { rootStore } from '../stores/rootStore';
 
 const { Title, Text } = Typography;
 
@@ -27,7 +28,7 @@ const LoginForm: React.FC = () => {
             videoUrl: '',
             roomId: roomIdFromUrl || '',
         },
-        mode: 'onTouched', // Проверяем ошибки на ходу, чтобы управлять доступностью кнопки
+        mode: 'onTouched',
     });
 
     // Наблюдаем за выбранным режимом ('host' или 'guest') для переключения инпутов
@@ -43,12 +44,16 @@ const LoginForm: React.FC = () => {
 
     // 3. Отправка формы (срабатывает, если всё заполнено верно)
     const onSubmit = (data: AuthFormValues) => {
-        console.log('Данные формы валидны:', data);
 
-        if (data.mode === 'host') {
+        const isHost = data.mode === 'host';
+        if (isHost) {
             // Здесь будет запуск MobX:
+            rootStore.userStore.loginUser(data.username, isHost);
+            rootStore.p2pStore.initRoomAsHost(data.videoUrl || '');
         } else {
             // Здесь будет запуск MobX:
+            rootStore.userStore.loginUser(data.username, false);
+            rootStore.p2pStore.connectToRoomAsGuest(data.roomId || '');
         }
     };
 

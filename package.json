@@ -14,9 +14,13 @@
     "@hookform/resolvers": "^5.4.0",
     "@tailwindcss/vite": "^4.3.2",
     "antd": "^6.5.0",
+    "mobx": "^6.16.1",
+    "mobx-react-lite": "^4.1.1",
+    "peerjs": "^1.5.5",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.80.0",
+    "react-youtube": "^10.1.0",
     "tailwindcss": "^4.3.2",
     "zod": "^4.4.3"
   },
